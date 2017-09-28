@@ -1,0 +1,97 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+<!--Requirement 6: Create a separate ‘admin’ section that shows some simple reports: -->
+<div id="container" class="container" style="display:none">
+    <h2>Admin Report</h2>
+    <p>This table has the info about the number of the name of contacts with different letters to start with</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Letter</th>
+                <th>TotalContacts</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody id="totalContacts"></tbody>
+    </table>
+</div>
+@section scripts{
+    <script>
+        //Get the data from Json store.
+        $(document).ready(function () {
+            $.ajax({
+                type: "GET",
+                url: "http://jsonplaceholder.typicode.com/users",
+                success: function (result) {
+                    Admin(result);
+                },
+                error: function (jqXHR, exception) {
+                var msg = '';
+                if (jqXHR.status === 0) {
+                    msg = 'Not connect.\n Verify Network.';
+                } else if (jqXHR.status == 404) {
+                    msg = 'Requested page not found. [404]';
+                } else if (jqXHR.status == 500) {
+                    msg = 'Internal Server Error [500].';
+                } else if (exception === 'parsererror') {
+                    msg = 'Requested JSON parse failed.';
+                } else if (exception === 'timeout') {
+                    msg = 'Time out error.';
+                } else if (exception === 'abort') {
+                    msg = 'Ajax request aborted.';
+                } else {
+                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
+                }
+                $("#contactscontainer").html(msg);
+            },
+            always: function () {
+                $("#loader").hide();
+            }
+            });
+        });
+
+        //generate the data I need for CountTotal
+        function Admin(result) {
+            var nameList = [];
+            for (var i = 0; i < result.length; i++) {
+                nameList.push(result[i].name);
+            }
+            CountTotal(nameList);
+        }
+
+        //For generate the report.
+        function CountTotal(nameList) {
+            //this is a string of letter for 26 chars.
+            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            //this array contains the letter and its total count.
+            var alphabetCount = [];
+
+            //this is initialization for every letters storing in alphabetCount.
+            for (var i = 0; i < alphabet.length; i++) {
+                var letter = {}
+                letter[alphabet[i]] = { count: 0, name: "" }
+                alphabetCount.push(letter);
+            };
+
+            //count the total contacts and store in alphabetCount.
+            for (var i = 0; i < nameList.length; i++) {
+                for (var j = 0; j < alphabet.length; j++) {
+                    if (nameList[i].charAt(0) === alphabet[j]) {
+                        alphabetCount[j][alphabet[j]]["count"]++;
+                        alphabetCount[j][alphabet[j]]["name"] += nameList[i] + ",";
+                    }
+                }
+            }
+            //append to the table.
+            for (var i = 0; i < alphabetCount.length; i++) {
+                $('#totalContacts').append("<tr><td>" + alphabet[i] + "</td><td>" + alphabetCount[i][alphabet[i]]["count"] + "</td>" + "<td>" + alphabetCount[i][alphabet[i]]["name"] + "</td>" + "</tr>");
+            }
+            $("#loader").hide();
+            $('#container').show();
+        }
+    </script>
+
+}
